@@ -15,7 +15,7 @@ from tensorflow.keras.models import Model
 from models.small_net import SmallModel
 from models.med_net import MedModel
 
-def train(model, X_train, y_train, X_test, y_test, checkpoint_path):
+def train(model, X_train, y_train, X_test, y_test, checkpoint_path,datagen =None):
     """ Training routine. """
 
     # Keras callbacks for training
@@ -30,13 +30,21 @@ def train(model, X_train, y_train, X_test, y_test, checkpoint_path):
     ]
 
     # Begin training
-    model.fit(
-        x=X_train, y=y_train,
-        epochs=hp.num_epochs,
-        batch_size=hp.batch_size,
-        callbacks=callback_list,
-        validation_data=(X_test, y_test)
-    )
+    if datagen is None:
+        model.fit(
+            x=X_train, y=y_train,
+            epochs=hp.num_epochs,
+            batch_size=hp.batch_size,
+            callbacks=callback_list,
+            validation_data=(X_test, y_test)
+            )
+    else:
+        model.fit(
+            datagen.flow(X_train, y_train, batch_size=hp.batch_size),
+            epochs=hp.num_epochs,            
+            callbacks=callback_list,
+            validation_data=(X_test, y_test)
+            )
 
 def test(model, test_data):
     """ Testing routine. """
@@ -87,7 +95,7 @@ def main():
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
 
-    train(small_model, X_train_small, y_train, X_test_small, y_test, checkpoint_path)
+    # train(small_model, X_train_small, y_train, X_test_small, y_test, checkpoint_path)
 
     ### Create Instance of MedModel
     med_model = MedModel()

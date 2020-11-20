@@ -32,19 +32,27 @@ class MedModel(tf.keras.Model):
 
         initializer = tf.keras.initializers.Ones()
 
+        # Define Model Layers (Yes I know this is not efficient... Fuck you.)
+        # First Basic-Conv Block
+        self.small_conv1 = Conv2D(filters=64, kernel_size=3, strides=1,padding='same', activation=None, name="small_conv1",kernel_initializer=self.small_conv1_init, trainable=False)
+        self.small_bn1 = BatchNormalization(name="small_bn1")
+        self.small_relu1 = ReLU(name="small_relu1")
+
+        # Second Basic-Conv Block
+        self.small_conv2 = Conv2D(filters=64, kernel_size=3, strides=1, padding='same', activation=None, name="small_conv2",kernel_initializer=self.small_conv2_init, trainable=False)
+        # self.small_bn2 = BatchNormalization(name="small_bn2")
+        # self.small_relu2 = ReLU(name="small_relu2")
+
         # Define Model Layers
         # First Conv Block
         self.med_conv1 = Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME', activation=None, name="med_conv1")
-        self.upsamp_small_filters_conv1 = Conv2D(filters=64, kernel_size=3, kernel_initializer=self.small_conv1_init, padding='SAME', name='upsamp_small_filters_conv1', trainable=False)
-        self.comb_tensors1 = Concatenate(axis=3, name="med_concat1")
+        self.med_concat1 = Concatenate(axis=3, name="med_concat1")
         self.med_bn1 = BatchNormalization(name="med_bn1")
         self.med_relu1 = ReLU(name="med_relu1")
 
         # Second Conv Block
         self.med_conv2 = Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME', activation=None, name="med_conv2")
-        self.down_med_relu1 = Conv2D(filters=64, kernel_size=1, padding='SAME', activation=None, kernel_initializer=initializer, name="reduce_filters", trainable=False)
-        self.upsamp_small_filters_conv2 = Conv2D(filters=64, kernel_size=3, kernel_initializer=self.small_conv2_init, padding='SAME', name='upsamp_small_filters_conv2', trainable=False)
-        self.comb_tensors2 = Concatenate(axis=3, name="med_concat2")
+        self.med_concat2 = Concatenate(axis=3, name="med_concat2")
         self.med_bn2 = BatchNormalization(name="med_bn2")
         self.med_relu2 = ReLU(name="med_relu2")
 
@@ -84,20 +92,26 @@ class MedModel(tf.keras.Model):
         :param training: BOOL this is a MODEL param that indicates if we are training or testing... I'm still trying to figure this out...
         :return: stuff (softmax class probabilities in this case)
         """
+        ## Connect Small Network
+        # Connect First Small Conv Block
+        small_conv1 = self.small_conv1.apply(inputs)
+        small_bn1 = self.small_bn1.apply(small_conv1)
+        small_relu1 = self.small_relu1.apply(small_bn1)
 
+        # Connect Second Small Conv Block
+        small_conv2 = self.small_conv2.apply(small_relu1)
+
+        ## Connect Med Network
         # Connect First Med Conv Block
         med_conv1 = self.med_conv1.apply(inputs)
-        upsamp_small_filters_conv1 = self.upsamp_small_filters_conv1.apply(inputs)
-        comb_tensors1 = self.comb_tensors1.apply([med_conv1, upsamp_small_filters_conv1])
-        med_bn1 = self.med_bn1.apply(comb_tensors1)
+        med_concat1 = self.med_concat1.apply([med_conv1, small_conv1])
+        med_bn1 = self.med_bn1.apply(med_concat1)
         med_relu1 = self.med_relu1.apply(med_bn1)
 
         # Connect Second Med Conv Block
         med_conv2 = self.med_conv2.apply(med_relu1)
-        down_samp_relu1 = self.down_med_relu1.apply(med_relu1)
-        upsamp_small_filters_conv2 = self.upsamp_small_filters_conv2.apply(down_samp_relu1)
-        comb_tensors2 = self.comb_tensors2.apply([med_conv2, upsamp_small_filters_conv2])
-        med_bn2 = self.med_bn2.apply(comb_tensors2)
+        med_concat2 = self.med_concat2.apply([med_conv2, small_conv2])
+        med_bn2 = self.med_bn2.apply(med_concat2)
         med_relu2 = self.med_relu2.apply(med_bn2)
 
         # Connect Third Med Conv Block
