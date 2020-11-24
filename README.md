@@ -16,3 +16,7 @@ RaNet is end-to-end trainable, multi-output, image classifier, that dynamically 
 * We use 3 classifier blocks instead of the original 6
 * We guestimated the details of the original network (since not stated in paper)
 * Will make runnable version for Jupyter 
+
+#### To Do
+* Implement Densenet and Resnet 
+* Compare performance (accuracy and computation speed)
