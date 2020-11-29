@@ -33,26 +33,50 @@ class FullRanet(tf.keras.Model):
         super(FullRanet, self).__init__()
 
         # Define Classification Threshold
-        self.threshold = 0.7
+        self.threshold = 0.85
 
         # Define the layers here
         self.small_input = tf.keras.layers.AveragePooling2D(pool_size=(4, 4))
         self.med_input = tf.keras.layers.AveragePooling2D(pool_size=(2, 2))
 
         # The first conv2d layer in (small, med and large) models
-        self.conv_in1 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+        self.conv_in1 = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation=None)
+        self.conv_in1_1 = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation=None)
+
         self.conv_in2 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
-        self.conv_in3 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+        self.conv_in2_2 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+
+        self.conv_in3 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+        self.conv_in3_3 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+
         # Remaining conv2d layers
-        self.small_conv2 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+        self.small_conv2 = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation=None)
+        self.small_conv2_2 = Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation=None)
+
         self.med_conv2 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+        self.med_conv2_2 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+
         self.med_conv3 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+        self.med_conv3_3 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+
         self.med_conv4 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
-        self.large_conv2 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
-        self.large_conv3 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
-        self.large_conv4 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
-        self.large_conv5 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
-        self.large_conv6 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+        self.med_conv4_4 = Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation=None)
+
+        self.large_conv2 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+        self.large_conv2_2 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+
+        self.large_conv3 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+        self.large_conv3_3 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+
+        self.large_conv4 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+        self.large_conv4_4 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+
+        self.large_conv5 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+        self.large_conv5_5 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+
+        self.large_conv6 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+        self.large_conv6_6 = Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation=None)
+
 
         # Batch normalization and relu layers
         self.bn1 = BatchNormalization()
@@ -105,9 +129,12 @@ class FullRanet(tf.keras.Model):
         self.dropout3 = Dropout(0.2)
         self.dropout4 = Dropout(0.2)
         self.dropout5 = Dropout(0.2)
-        self.dropout6 = Dropout(0.2)
+        self.dropout6 = Dropout(0.1)
+        self.dense_11 = Dense(units=64, activation='relu')
         self.dense_1 = Dense(units=10, activation='softmax', name="output_1")
+        self.dense_22 = Dense(units=64, activation='relu')
         self.dense_2 = Dense(units=10, activation='softmax', name="output_2")
+        self.dense_33 = Dense(units=100, activation='relu')
         self.dense_3 = Dense(units=10, activation='softmax', name="output_3")
 
         # Merge Layers (upsample2D and concatenate)
@@ -151,12 +178,15 @@ class FullRanet(tf.keras.Model):
 
         # first conv block
         x = self.conv_in1(x)
+        x = self.conv_in1_1(x)
         x = self.bn1(x)
         x = self.relu1(x)
         small_conv_1 = x  # save output for later
+        x = self.dropout4(x)
 
         # second conv block
         x = self.small_conv2(x)
+        x = self.small_conv2_2(x)
         x = self.bn2(x)
         x = self.relu2(x)
         small_conv_2 = x  # save output for later
@@ -166,6 +196,7 @@ class FullRanet(tf.keras.Model):
         x = self.class_small_conv2(x)
         x = self.flatten1(x)
         x = self.dropout1(x)
+        x = self.dense_11(x)
         x = self.dense_1(x)
 
         return [x, small_conv_1, small_conv_2]
@@ -175,30 +206,35 @@ class FullRanet(tf.keras.Model):
         x = self.med_input(inputs)
         # first conv block
         x = self.conv_in2(x)
+        x = self.conv_in2_2(x)
         temp = self.upsamp1(small_conv_1)
         x = self.concat1([x, temp])
-        x = self.conv_red1(x)
+        #x = self.conv_red1(x)
         x = self.bn3(x)
         x = self.relu3(x)
         med_conv_1 = x  # save output for later
 
         # second conv block
         x = self.med_conv2(x)
+        x = self.med_conv2_2(x)
         temp = self.upsamp2(small_conv_2)
         x = self.concat2([x, temp])
-        x = self.conv_red2(x)
+        #x = self.conv_red2(x)
         x = self.bn4(x)
         x = self.relu4(x)
         med_conv_2 = x  # save output for later
+        x = self.dropout5(x)
 
         # third conv block
         x = self.med_conv3(x)
+        x = self.med_conv3_3(x)
         x = self.bn5(x)
         x = self.relu5(x)
         med_conv_3 = x  # save output for later
 
         # fourth conv block
         x = self.med_conv4(x)
+        x = self.med_conv4_4(x)
         x = self.bn6(x)
         x = self.relu6(x)
         med_conv_4 = x  # save output for later
@@ -208,6 +244,7 @@ class FullRanet(tf.keras.Model):
         x = self.class_med_conv2(x)
         x = self.flatten2(x)
         x = self.dropout2(x)
+        x = self.dense_22(x)
         x = self.dense_2(x)
         return [x, med_conv_1, med_conv_2, med_conv_3, med_conv_4]
 
@@ -215,43 +252,50 @@ class FullRanet(tf.keras.Model):
         # don't need to downsample inputs
         # first conv block
         x = self.conv_in3(inputs)
+        x = self.conv_in3_3(x)
         temp = self.upsamp3(med_conv_1)
         x = self.concat3([x, temp])
-        x = self.conv_red3(x)
+        #x = self.conv_red3(x)
         x = self.bn7(x)
         x = self.relu7(x)
 
         # second conv block
         x = self.large_conv2(x)
+        x = self.large_conv2_2(x)
         temp = self.upsamp4(med_conv_2)
         x = self.concat4([x, temp])
-        x = self.conv_red4(x)
+        #x = self.conv_red4(x)
         x = self.bn8(x)
         x = self.relu8(x)
 
         # third conv block
         x = self.large_conv3(x)
+        x = self.large_conv3_3(x)
         temp = self.upsamp5(med_conv_3)
         x = self.concat5([x, temp])
-        x = self.conv_red5(x)
+        #x = self.conv_red5(x)
         x = self.bn9(x)
         x = self.relu9(x)
 
         # fourth conv block
         x = self.large_conv4(x)
+        x = self.large_conv4_4(x)
         temp = self.upsamp6(med_conv_4)
         x = self.concat6([x, temp])
-        x = self.conv_red6(x)
+        #x = self.conv_red6(x)
         x = self.bn10(x)
         x = self.relu10(x)
+        x = self.dropout6(x)
 
         # fifth conv block
         x = self.large_conv5(x)
+        x = self.large_conv5_5(x)
         x = self.bn11(x)
         x = self.relu11(x)
 
         # sixth conv block
         x = self.large_conv6(x)
+        x = self.large_conv6_6(x)
         x = self.bn12(x)
         x = self.relu12(x)
 
@@ -260,6 +304,7 @@ class FullRanet(tf.keras.Model):
         x = self.class_large_conv2(x)
         x = self.flatten3(x)
         x = self.dropout3(x)
+        x = self.dense_33(x)
         x = self.dense_3(x)
         return x
 
