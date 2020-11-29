@@ -15,6 +15,7 @@ from tensorflow.keras.layers import BatchNormalization
 import time
 import numpy as np
 
+
 # load train and test dataset
 def load_dataset():
     # load dataset
@@ -103,13 +104,14 @@ def run_test_harness():
     # fit model
     steps = int(trainX.shape[0] / 64)
     history = model.fit(it_train, steps_per_epoch=steps, epochs=200, validation_data=(testX, testY),
-                                  verbose=1)
+                        verbose=1)
     # evaluate model
     _, acc = model.evaluate(testX, testY, verbose=0)
     print('> %.3f' % (acc * 100.0))
     # learning curves
     summarize_diagnostics(history)
     model.save('vgg_final_model.h5')
+
 
 def vgg_prediction():
     # load dataset
@@ -122,11 +124,14 @@ def vgg_prediction():
     for i in range(100):
         ran_img = np.random.randint(low=0, high=1000)
         result = model.predict_classes(testX[ran_img].reshape(1, 32, 32, 3))
-        print (result)
+        print(result)
     end = time.time()
-    comp_time = (end - start)/100 #0.0325 #0.0324 #0.03442
+    comp_time = (end - start) / 100  # 0.0325 #0.0324 #0.03442
     print(comp_time)
 
-# entry point, run the test harness
-#run_test_harness()
-vgg_prediction()
+
+if __name__ == '__main__':
+    # entry point, run the test harness
+    # run_test_harness()
+    # for experiment run vgg_prediction()
+    vgg_prediction()

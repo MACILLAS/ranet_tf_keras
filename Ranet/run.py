@@ -114,14 +114,6 @@ def main():
     model = train(model, X_train, y_train, X_test, y_test, checkpoint_path)
     model.save_weights("ranet_model.h5")
 
-    start = time.time()
-    pred, conf = model.predict(X_test[0].reshape(1, 32, 32, 3))
-    end = time.time()
-    print(pred)
-    comp_time = end - start
-    print(comp_time)
-    print("STOP")
-
 
 def ranet_prediction():
     model = FullRanet()
